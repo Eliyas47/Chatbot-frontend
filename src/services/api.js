@@ -32,6 +32,12 @@ function getAuthHeaders(token) {
   return token ? { Authorization: `Token ${token}` } : {}
 }
 
+function isHtmlPayload(value) {
+  if (typeof value !== 'string') return false
+  const trimmed = value.trim().toLowerCase()
+  return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html')
+}
+
 async function request(path, { method = 'GET', token, data, formData } = {}) {
   const headers = {
     ...getAuthHeaders(token),
@@ -62,7 +68,7 @@ async function request(path, { method = 'GET', token, data, formData } = {}) {
       }
 
       const message = typeof payload === 'string'
-        ? payload
+        ? (isHtmlPayload(payload) ? 'Server error. Please try again in a few seconds.' : payload)
         : payload?.error || payload?.detail || payload?.message || 'Request failed'
 
       // If /api is not available in this runtime, retry against the next candidate.
