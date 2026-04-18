@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { listConversations, updateUser } from '../services/api'
+import React, { useState, useEffect } from 'react'
+import { deleteConversation, listConversations, updateUser } from '../services/api'
 
-export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId, onSelectConvo, token, refreshTrigger }) {
+export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId, onSelectConvo, token, refreshTrigger, theme, onToggleTheme }) {
   const [convos, setConvos] = useState([])
   const [query, setQuery] = useState('')
   const [showSettings, setShowSettings] = useState(false)
@@ -12,7 +12,6 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
   // Settings form state
   const [settingsName, setSettingsName] = useState('')
   const [settingsEmail, setSettingsEmail] = useState('')
-  const [darkMode, setDarkMode] = useState(true)
   const [notifications, setNotifications] = useState(false)
 
   // Update settings form when user changes
@@ -24,26 +23,32 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
   }, [user])
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('convos') || '[]')
-    setConvos(saved)
-  }, [refreshTrigger])
-
-  useEffect(() => {
     if (!token) return
-    listConversations(token).then((res) => {
-      if (Array.isArray(res)) setConvos(res)
-    }).catch(() => { })
-  }, [token, refreshTrigger])
+    let cancelled = false
+
+    listConversations(token, query)
+      .then((res) => {
+        if (!cancelled && Array.isArray(res)) setConvos(res)
+      })
+      .catch(() => { })
+
+    return () => {
+      cancelled = true
+    }
+  }, [token, refreshTrigger, query])
 
   function newConvo() {
     onSelectConvo(null)
   }
 
-  function deleteConvo(id) {
-    const next = convos.filter((c) => c.id !== id)
-    setConvos(next)
-    localStorage.setItem('convos', JSON.stringify(next))
-    if (selectedConvoId === id) onSelectConvo(null)
+  async function deleteConvo(id) {
+    try {
+      await deleteConversation(token, id)
+      setConvos((current) => current.filter((c) => c.id !== id))
+      if (selectedConvoId === id) onSelectConvo(null)
+    } catch (error) {
+      console.error('Failed to delete conversation', error)
+    }
   }
 
   async function handleSaveSettings() {
@@ -100,7 +105,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
       </div>
 
       <div className="conversation-list">
-        {convos.filter(c => c.title.toLowerCase().includes(query.toLowerCase())).map(c => (
+        {convos.map(c => (
           <div
             key={c.id}
             onClick={() => onSelectConvo(c.id)}
@@ -271,8 +276,8 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
                     <span className="settings-description">Use dark theme</span>
                   </div>
                   <div
-                    className={`toggle-switch ${darkMode ? 'active' : ''}`}
-                    onClick={() => setDarkMode(!darkMode)}
+                    className={`toggle-switch ${theme === 'dark' ? 'active' : ''}`}
+                    onClick={onToggleTheme}
                   >
                     <div className="toggle-knob"></div>
                   </div>

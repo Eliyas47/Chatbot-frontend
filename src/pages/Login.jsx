@@ -18,9 +18,9 @@ export default function Login({ setToken }) {
     try {
       const data = await login(email.trim(), password);
       if (data && data.token) {
-        // Store session user
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setToken(data.token, data.user);
+        const user = data.user || { username: email.trim(), email: email.trim() };
+        localStorage.setItem('user', JSON.stringify(user));
+        setToken(data.token, user);
       } else {
         setError("Login failed");
       }
@@ -32,10 +32,7 @@ export default function Login({ setToken }) {
   };
 
   const handleGoogle = () => {
-    // Simulate Google sign-in with user data
-    const googleUser = { username: 'Google User', email: 'user@gmail.com' };
-    localStorage.setItem('user', JSON.stringify(googleUser));
-    setToken('google-demo-token', googleUser);
+    setError("Google sign-in is not configured yet");
   };
 
   const handleKeyPress = (e) => {

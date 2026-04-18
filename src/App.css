@@ -1,42 +1,88 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  text-align: left;
+}
+
+.app-shell,
+.auth-page {
+  width: 100%;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.auth-card {
+  width: min(460px, calc(100vw - 2rem));
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(24px);
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.auth-footer {
+  margin-top: 30px;
   text-align: center;
+  color: var(--text-secondary);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.auth-btn,
+.google-btn {
+  width: 100%;
+  margin-top: 12px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.auth-divider {
+  text-align: center;
+  margin: 18px 0 8px;
+  font-size: 14px;
+  opacity: 0.7;
 }
 
-.card {
-  padding: 2em;
+.auth-footer a {
+  color: var(--accent-purple);
+  text-decoration: none;
 }
 
-.read-the-docs {
-  color: #888;
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+body[data-theme="light"] .auth-page {
+  background:
+    radial-gradient(circle at top, rgba(14, 165, 233, 0.12), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+}
+
+body[data-theme="light"] .auth-card {
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
+}
+
+body[data-theme="light"] .auth-footer a {
+  color: #2563eb;
 }

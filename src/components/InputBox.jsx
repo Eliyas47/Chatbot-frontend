@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { uploadFile } from '../services/api'
 
-export default function InputBox({ onSend, token, onFileAnalysis }) {
+export default function InputBox({ onSend, onFileAnalysis }) {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
-  const [uploading, setUploading] = useState(false)
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -20,24 +18,12 @@ export default function InputBox({ onSend, token, onFileAnalysis }) {
     if ((!message.trim() && !selectedFile) || sending) return
     setSending(true)
     try {
-      // If there's a file, upload it first
-      if (selectedFile) {
-        setUploading(true)
-        try {
-          const res = await uploadFile(token, selectedFile)
-          if (onFileAnalysis) onFileAnalysis(res)
-        } catch (e) {
-          if (onFileAnalysis) onFileAnalysis({ error: e.message })
-        }
-        setUploading(false)
-        setSelectedFile(null)
+      await onSend(message.trim(), selectedFile ? { file: selectedFile } : {})
+      if (onFileAnalysis && selectedFile) {
+        onFileAnalysis({ summary: selectedFile.name })
       }
-
-      // Send the message if there is one
-      if (message.trim()) {
-        await onSend(message)
-        setMessage('')
-      }
+      setMessage('')
+      setSelectedFile(null)
     } finally {
       setSending(false)
     }
@@ -122,17 +108,17 @@ export default function InputBox({ onSend, token, onFileAnalysis }) {
           </div>
           <button
             onClick={handleSend}
-            disabled={sending || uploading || (!message.trim() && !selectedFile)}
+            disabled={sending || (!message.trim() && !selectedFile)}
             className="send-btn"
             aria-label="Send message"
           >
-            {sending || uploading ? (
+            {sending ? (
               <>
                 <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                {uploading ? 'Uploading' : 'Sending'}
+                Sending
               </>
             ) : (
               <>
@@ -147,7 +133,7 @@ export default function InputBox({ onSend, token, onFileAnalysis }) {
         </div>
       </div>
       <div className="input-hint">
-        Ella AI can make a mistake. Check important info.
+        Ella AI makes things easier—double-check essentials to stay accurate.
       </div>
     </>
   )
