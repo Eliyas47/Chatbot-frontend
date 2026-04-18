@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { t } from '../i18n/translations'
 
-export default function InputBox({ onSend, onFileAnalysis }) {
+export default function InputBox({ onSend, onFileAnalysis, language }) {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -77,7 +78,7 @@ export default function InputBox({ onSend, onFileAnalysis }) {
           onKeyDown={handleKeyDown}
           className="input-textarea"
           rows={1}
-          placeholder="Message Ella..."
+          placeholder={t('messagePlaceholder', language)}
         />
         <div className="input-actions">
           <div className="input-tools">
@@ -90,14 +91,14 @@ export default function InputBox({ onSend, onFileAnalysis }) {
             />
             <button
               className="input-tool-btn"
-              title="Attach file"
+              title={t('attachFile', language)}
               onClick={() => fileInputRef.current?.click()}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95L10.5 18.4a1.5 1.5 0 0 1-2.12-2.12l7.38-7.38" />
               </svg>
             </button>
-            <button className="input-tool-btn" title="Voice input">
+              <button className="input-tool-btn" title={t('voiceInput', language)}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -118,7 +119,7 @@ export default function InputBox({ onSend, onFileAnalysis }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Sending
+                {t('sending', language)}
               </>
             ) : (
               <>
@@ -126,14 +127,14 @@ export default function InputBox({ onSend, onFileAnalysis }) {
                   <line x1="22" y1="2" x2="11" y2="13" />
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
-                Send
+                {t('send', language)}
               </>
             )}
           </button>
         </div>
       </div>
       <div className="input-hint">
-        Ella AI makes things easier—double-check essentials to stay accurate.
+        {t('inputHint', language)}
       </div>
     </>
   )

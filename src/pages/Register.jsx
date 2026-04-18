@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { register } from '../services/api'
+import { t } from '../i18n/translations'
 
-export default function Register({ setToken }) {
+export default function Register({ setToken, language }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -12,7 +13,7 @@ export default function Register({ setToken }) {
     setError('')
 
     if (!email.trim() || !password.trim()) {
-      setError('Please fill in all fields')
+      setError(t('pleaseFillAllFields', language))
       return
     }
 
@@ -25,14 +26,14 @@ export default function Register({ setToken }) {
         setToken(res.token, user)
       }
     } catch (e) {
-      setError(e?.message || 'Something went wrong')
+      setError(e?.message || t('somethingWentWrong', language))
     } finally {
       setLoading(false)
     }
   }
 
   const handleGoogle = () => {
-    setError('Google sign-up is not configured yet')
+    setError(t('googleSignUpNotConfigured', language))
   }
 
   return (
@@ -45,33 +46,33 @@ export default function Register({ setToken }) {
 
       <form onSubmit={handleRegister}>
         <div className="form-group">
-          <label className="form-label">Email</label>
+          <label className="form-label">{t('email', language)}</label>
           <input
             className="form-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            placeholder={t('yourEmail', language)}
             disabled={loading}
             autoFocus
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Password</label>
+          <label className="form-label">{t('password', language)}</label>
           <input
             className="form-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Create a password"
+            placeholder={t('password', language)}
             disabled={loading}
           />
         </div>
 
         {/* SIGN UP BUTTON */}
         <button type="submit" className="auth-btn" disabled={loading}>
-          {loading ? 'Creating Account...' : 'Sign Up'}
+          {loading ? t('creatingAccount', language) : t('signUp', language)}
         </button>
       </form>
 

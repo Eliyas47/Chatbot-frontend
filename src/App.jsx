@@ -4,6 +4,7 @@ import ChatPage from './pages/ChatPage.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import { getUser } from './services/api'
+import { getStoredLanguage, setStoredLanguage, t } from './i18n/translations'
 
 const THEME_STORAGE_KEY = 'theme'
 
@@ -90,6 +91,7 @@ export default function App() {
   const [token, setTokenState] = useState(localStorage.getItem('token') || null)
   const [user, setUser] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
+  const [language, setLanguageState] = useState(getStoredLanguage())
 
   const getInitialRoute = () => {
     const hash = window.location.hash.replace('#', '')
@@ -112,6 +114,12 @@ export default function App() {
     document.documentElement.style.colorScheme = theme
     localStorage.setItem(THEME_STORAGE_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.lang = language === 'om' ? 'om' : 'en'
+    document.documentElement.setAttribute('dir', 'ltr')
+    setStoredLanguage(language)
+  }, [language])
 
   useEffect(() => {
     if (token) {
@@ -156,6 +164,10 @@ export default function App() {
     setTheme(current => (current === 'dark' ? 'light' : 'dark'))
   }
 
+  function handleLanguageChange(nextLanguage) {
+    setLanguageState(nextLanguage === 'om' ? 'om' : 'en')
+  }
+
   // ✅ AUTH LAYOUT (Fixed Footer Position)
   const AuthLayout = ({ children }) => (
     <div className="auth-page">
@@ -177,8 +189,8 @@ export default function App() {
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </div>
-            <h1>Ella AI</h1>
-            <p>Smart AI Conversation Assistant</p>
+            <h1>{t('appName', language)}</h1>
+            <p>{t('appTagline', language)}</p>
           </div>
 
           {children}
@@ -188,7 +200,7 @@ export default function App() {
       {/* ✅ Footer BELOW container */}
       <div className="auth-footer">
         <p>
-          Already have an account? <a href="#/login">Sign in</a>
+          {t('alreadyHaveAccount', language)} <a href="#/login">{t('signIn', language)}</a>
         </p>
 
         <div className="auth-copyright">
@@ -206,6 +218,7 @@ export default function App() {
             <Register
               onRegistered={() => window.location.hash = '/login'}
               setToken={(t, u) => setToken(t, u)}
+              language={language}
             />
           </AuthLayout>
         )
@@ -213,7 +226,7 @@ export default function App() {
 
       return (
         <AuthLayout>
-          <Login setToken={(t, u) => setToken(t, u)} />
+          <Login setToken={(t, u) => setToken(t, u)} language={language} />
         </AuthLayout>
       )
     }
@@ -227,6 +240,8 @@ export default function App() {
           onUpdateUser={handleUpdateUser}
           theme={theme}
           onToggleTheme={toggleTheme}
+          language={language}
+          onLanguageChange={handleLanguageChange}
         />
       </div>
     )

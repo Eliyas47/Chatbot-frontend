@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { login } from "../services/api";
+import { t } from '../i18n/translations'
 
-export default function Login({ setToken }) {
+export default function Login({ setToken, language }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -10,7 +11,7 @@ export default function Login({ setToken }) {
   const handleLogin = async () => {
     setError("");
     if (!email || !password) {
-      setError("Please enter both email and password");
+      setError(t('pleaseEnterBoth', language));
       return;
     }
 
@@ -22,17 +23,17 @@ export default function Login({ setToken }) {
         localStorage.setItem('user', JSON.stringify(user));
         setToken(data.token, user);
       } else {
-        setError("Login failed");
+        setError(t('loginFailed', language));
       }
     } catch (e) {
-      setError(e.message || "Invalid credentials");
+      setError(e.message || t('invalidCredentials', language));
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogle = () => {
-    setError("Google sign-in is not configured yet");
+    setError(t('googleNotConfigured', language));
   };
 
   const handleKeyPress = (e) => {
@@ -50,11 +51,11 @@ export default function Login({ setToken }) {
           </div>
         )}
         <div className="form-group">
-          <label className="form-label">Email</label>
+          <label className="form-label">{t('email', language)}</label>
           <input
             className="form-input"
             type="email"
-            placeholder="Enter your email"
+            placeholder={t('yourEmail', language)}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -62,11 +63,11 @@ export default function Login({ setToken }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Password</label>
+          <label className="form-label">{t('password', language)}</label>
           <input
             className="form-input"
             type="password"
-            placeholder="Enter your password"
+            placeholder={t('password', language)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -84,10 +85,10 @@ export default function Login({ setToken }) {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              Signing in...
+              {t('signingIn', language)}
             </span>
           ) : (
-            'Sign In'
+            t('signInButton', language)
           )}
         </button>
 
@@ -107,7 +108,7 @@ export default function Login({ setToken }) {
       </div>
 
       <div className="auth-footer">
-        New here? <a href="#/register">Create an account</a>
+        New here? <a href="#/register">{t('registerPrompt', language)}</a>
       </div>
     </>
   )

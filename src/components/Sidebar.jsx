@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { deleteConversation, listConversations, updateUser } from '../services/api'
+import { createConversation, deleteConversation, listConversations, updateUser } from '../services/api'
+import { t } from '../i18n/translations'
 
-export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId, onSelectConvo, token, refreshTrigger, theme, onToggleTheme }) {
+export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId, onSelectConvo, token, refreshTrigger, theme, onToggleTheme, language, onLanguageChange }) {
   const [convos, setConvos] = useState([])
   const [query, setQuery] = useState('')
   const [showSettings, setShowSettings] = useState(false)
@@ -13,6 +14,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
   const [settingsName, setSettingsName] = useState('')
   const [settingsEmail, setSettingsEmail] = useState('')
   const [notifications, setNotifications] = useState(false)
+  const [settingsLanguage, setSettingsLanguage] = useState(language || 'en')
 
   // Update settings form when user changes
   useEffect(() => {
@@ -21,6 +23,10 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
       setSettingsEmail(user.email || '')
     }
   }, [user])
+
+  useEffect(() => {
+    setSettingsLanguage(language || 'en')
+  }, [language])
 
   useEffect(() => {
     if (!token) return
@@ -37,8 +43,25 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
     }
   }, [token, refreshTrigger, query])
 
-  function newConvo() {
+  async function newConvo() {
     onSelectConvo(null)
+
+    if (!token) return
+
+    try {
+      const created = await createConversation(token, t('newChat', language))
+      const newConversation = {
+        id: created?.conversation_id,
+        title: created?.title || t('newChat', language),
+      }
+
+      if (newConversation.id) {
+        setConvos((current) => [newConversation, ...current.filter((c) => c.id !== newConversation.id)])
+        onSelectConvo(newConversation.id)
+      }
+    } catch (error) {
+      console.error('Failed to create conversation', error)
+    }
   }
 
   async function deleteConvo(id) {
@@ -54,6 +77,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
   async function handleSaveSettings() {
     const updated = await updateUser({ username: settingsName, email: settingsEmail })
     if (onUpdateUser) onUpdateUser(updated)
+    if (onLanguageChange) onLanguageChange(settingsLanguage)
     setShowSettings(false)
   }
 
@@ -86,19 +110,19 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
-          <span className="sidebar-logo-text">Ella AI</span>
+          <span className="sidebar-logo-text">{t('appName', language)}</span>
         </div>
 
         <button onClick={newConvo} className="new-chat-btn">
           <span className="icon">+</span>
-          <span>New Chat</span>
+          <span>{t('newChat', language)}</span>
         </button>
       </div>
 
       <div className="search-box">
         <input
           className="search-input"
-          placeholder="Search conversations..."
+          placeholder={t('searchConversations', language)}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -120,7 +144,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
             <button
               onClick={(e) => { e.stopPropagation(); deleteConvo(c.id); }}
               className="conversation-delete"
-              title="Delete conversation"
+              title={t('deleteConversation', language) || 'Delete conversation'}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
@@ -134,8 +158,8 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 opacity-50">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <p className="text-sm">No conversations yet</p>
-            <p className="text-xs mt-1 opacity-60">Start a new chat to begin</p>
+            <p className="text-sm">{t('noConversationsYet', language)}</p>
+            <p className="text-xs mt-1 opacity-60">{t('startNewChat', language)}</p>
           </div>
         )}
       </div>
@@ -169,7 +193,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
                   <circle cx="12" cy="12" r="3" />
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
-                Settings
+                {t('settings', language)}
               </button>
 
               {/* Help & FAQ with Submenu */}
@@ -186,7 +210,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                     <line x1="12" y1="17" x2="12.01" y2="17" />
                   </svg>
-                  Help & FAQ
+                  {t('helpFaq', language)}
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', opacity: 0.5 }}>
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
@@ -213,13 +237,13 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
               </div>
 
               <div className="profile-menu-divider"></div>
-              <button className="profile-menu-item logout" onClick={onSignOut}>
+                <button className="profile-menu-item logout" onClick={onSignOut}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
-                Log out
+                {t('logOut', language)}
               </button>
             </div>
           )}
@@ -231,7 +255,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
         <div className="settings-overlay" onClick={() => setShowSettings(false)}>
           <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
             <div className="settings-header">
-              <h2>Settings</h2>
+              <h2>{t('settings', language)}</h2>
               <button className="settings-close" onClick={() => setShowSettings(false)}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -241,39 +265,50 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
             </div>
             <div className="settings-content">
               <div className="settings-section">
-                <h3>Profile</h3>
+                <h3>{t('profile', language)}</h3>
                 <div className="settings-item">
-                  <label>Display Name</label>
+                  <label>{t('displayName', language)}</label>
                   <input
                     type="text"
                     value={settingsName}
                     onChange={(e) => setSettingsName(e.target.value)}
-                    placeholder="Your name"
+                    placeholder={t('yourName', language)}
                   />
                 </div>
                 <div className="settings-item">
-                  <label>Email</label>
+                  <label>{t('email', language)}</label>
                   <input
                     type="email"
                     value={settingsEmail}
                     onChange={(e) => setSettingsEmail(e.target.value)}
-                    placeholder="your@email.com"
+                    placeholder={t('yourEmail', language)}
                   />
+                </div>
+                <div className="settings-item">
+                  <label>{t('language', language)}</label>
+                  <select
+                    value={settingsLanguage}
+                    onChange={(e) => setSettingsLanguage(e.target.value)}
+                  >
+                    <option value="en">{t('english', language)}</option>
+                    <option value="om">{t('afaanOromo', language)}</option>
+                  </select>
+                  <span className="settings-description">{t('languageNote', language)}</span>
                 </div>
                 <button
                   className="auth-btn"
                   style={{ marginTop: '1rem' }}
                   onClick={handleSaveSettings}
                 >
-                  Save Changes
+                  {t('saveChanges', language)}
                 </button>
               </div>
               <div className="settings-section">
-                <h3>Preferences</h3>
+                <h3>{t('preferences', language)}</h3>
                 <div className="settings-item toggle">
                   <div>
-                    <label>Dark Mode</label>
-                    <span className="settings-description">Use dark theme</span>
+                    <label>{t('darkMode', language)}</label>
+                    <span className="settings-description">{t('useDarkTheme', language)}</span>
                   </div>
                   <div
                     className={`toggle-switch ${theme === 'dark' ? 'active' : ''}`}
@@ -284,8 +319,8 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
                 </div>
                 <div className="settings-item toggle">
                   <div>
-                    <label>Notifications</label>
-                    <span className="settings-description">Receive notifications</span>
+                    <label>{t('notifications', language)}</label>
+                    <span className="settings-description">{t('receiveNotifications', language)}</span>
                   </div>
                   <div
                     className={`toggle-switch ${notifications ? 'active' : ''}`}
@@ -296,10 +331,10 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
                 </div>
               </div>
               <div className="settings-section">
-                <h3>About</h3>
+                <h3>{t('about', language)}</h3>
                 <div className="settings-about">
-                  <p>Ella AI v1.0.0</p>
-                  <p className="text-muted">Your intelligent conversation partner</p>
+                  <p>{t('appName', language)} v1.0.0</p>
+                  <p className="text-muted">{t('yourIntelligentPartner', language)}</p>
                 </div>
               </div>
             </div>
@@ -312,7 +347,7 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
         <div className="settings-overlay" onClick={() => setShowShortcuts(false)}>
           <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
             <div className="settings-header">
-              <h2>Keyboard Shortcuts</h2>
+              <h2>{t('keyboardShortcuts', language)}</h2>
               <button className="settings-close" onClick={() => setShowShortcuts(false)}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -323,19 +358,19 @@ export default function Sidebar({ user, onSignOut, onUpdateUser, selectedConvoId
             <div className="settings-content">
               <div className="settings-section">
                 <div className="shortcut-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <span>New Chat</span>
+                  <span>{t('newChat', language)}</span>
                   <span style={{ background: 'var(--glass-bg)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8em' }}>Ctrl + N</span>
                 </div>
                 <div className="shortcut-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <span>Send Message</span>
+                  <span>{t('sendMessage', language)}</span>
                   <span style={{ background: 'var(--glass-bg)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8em' }}>Enter</span>
                 </div>
                 <div className="shortcut-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <span>Toggle Sidebar</span>
+                  <span>{t('toggleSidebar', language)}</span>
                   <span style={{ background: 'var(--glass-bg)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8em' }}>Ctrl + S</span>
                 </div>
                 <div className="shortcut-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <span>Toggle Settings</span>
+                  <span>{t('toggleSettings', language)}</span>
                   <span style={{ background: 'var(--glass-bg)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8em' }}>Ctrl + ,</span>
                 </div>
               </div>

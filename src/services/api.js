@@ -1,4 +1,24 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
+const API_BASE_FROM_ENV = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+const DEPLOYED_BACKEND_API_BASE = 'https://django-gemini-chatbot.onrender.com/api'
+
+function getDefaultApiCandidates() {
+  if (typeof window === 'undefined') {
+    return ['/api', DEPLOYED_BACKEND_API_BASE]
+  }
+
+  const host = window.location.hostname
+  const isLocalHost = host === 'localhost' || host === '127.0.0.1'
+
+  if (isLocalHost) {
+    return ['/api', 'http://127.0.0.1:8000/api', DEPLOYED_BACKEND_API_BASE]
+  }
+
+  return ['/api', DEPLOYED_BACKEND_API_BASE]
+}
+
+const API_BASE_CANDIDATES = API_BASE_FROM_ENV
+  ? [API_BASE_FROM_ENV]
+  : getDefaultApiCandidates()
 
 function safeJsonParse(value, fallback = null) {
   try {
@@ -26,23 +46,48 @@ async function request(path, { method = 'GET', token, data, formData } = {}) {
     init.body = JSON.stringify(data)
   }
 
-  let response
-  try {
-    response = await fetch(`${API_BASE}${path}`, init)
-  } catch {
-    throw new Error('Cannot reach backend API. Ensure Django is running on http://127.0.0.1:8000.')
-  }
-  const contentType = response.headers.get('content-type') || ''
-  const payload = contentType.includes('application/json') ? await response.json() : await response.text()
+  let lastError = null
 
-  if (!response.ok) {
-    const message = typeof payload === 'string'
-      ? payload
-      : payload?.error || payload?.detail || payload?.message || 'Request failed'
-    throw new Error(message)
+  for (let i = 0; i < API_BASE_CANDIDATES.length; i += 1) {
+    const base = API_BASE_CANDIDATES[i]
+    const isLastCandidate = i === API_BASE_CANDIDATES.length - 1
+
+    try {
+      const response = await fetch(`${base}${path}`, init)
+      const contentType = response.headers.get('content-type') || ''
+      const payload = contentType.includes('application/json') ? await response.json() : await response.text()
+
+      if (response.ok) {
+        return payload
+      }
+
+      const message = typeof payload === 'string'
+        ? payload
+        : payload?.error || payload?.detail || payload?.message || 'Request failed'
+
+      // If /api is not available in this runtime, retry against the next candidate.
+      const shouldRetryWithNextBase = [404, 405, 502, 503, 504].includes(response.status)
+      if (!API_BASE_FROM_ENV && !isLastCandidate && shouldRetryWithNextBase) {
+        lastError = new Error(message)
+        continue
+      }
+
+      throw new Error(message)
+    } catch (error) {
+      if (!isLastCandidate) {
+        lastError = error
+        continue
+      }
+
+      if (!API_BASE_FROM_ENV) {
+        throw new Error('Cannot reach backend API. Ensure Django is running on http://127.0.0.1:8000.')
+      }
+
+      throw error
+    }
   }
 
-  return payload
+  throw lastError || new Error('Request failed')
 }
 
 function normalizeUser(user, fallbackIdentifier = '') {

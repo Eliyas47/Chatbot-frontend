@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import ChatWindow from '../components/ChatWindow'
 
-export default function ChatPage({ token, user, onSignOut, onUpdateUser, theme, onToggleTheme }) {
+export default function ChatPage({ token, user, onSignOut, onUpdateUser, theme, onToggleTheme, language, onLanguageChange }) {
   const [selectedConvoId, setSelectedConvoId] = useState(null)
 
   // Lifted state to trigger sidebar update
@@ -26,6 +26,8 @@ export default function ChatPage({ token, user, onSignOut, onUpdateUser, theme, 
         refreshTrigger={newConvoTrigger}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        language={language}
+        onLanguageChange={onLanguageChange}
       />
       <ChatWindow
         selectedConvoId={selectedConvoId}
@@ -33,6 +35,7 @@ export default function ChatPage({ token, user, onSignOut, onUpdateUser, theme, 
         onNewConvo={handleNewConversation}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        language={language}
       />
     </div>
   )

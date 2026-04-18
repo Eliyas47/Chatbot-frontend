@@ -2,11 +2,12 @@ import React, { useEffect, useState, useRef } from 'react'
 import Message from './Message'
 import InputBox from './InputBox'
 import { getConversationMessages, sendMessage, uploadFile } from '../services/api'
+import { t } from '../i18n/translations'
 
-export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, onToggleTheme }) {
+export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, onToggleTheme, language }) {
   const [messages, setMessages] = useState([])
   const [showShareToast, setShowShareToast] = useState(false)
-  const [conversationTitle, setConversationTitle] = useState('New Conversation')
+  const [conversationTitle, setConversationTitle] = useState(t('newConversation', language))
   const [loadingConversation, setLoadingConversation] = useState(false)
   const messagesEndRef = useRef(null)
 
@@ -14,13 +15,12 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Clear messages when selected conversation becomes null (New Chat) or changes
   useEffect(() => {
     let cancelled = false
 
     async function loadConversation() {
       if (!selectedConvoId) {
-        setConversationTitle('New Conversation')
+        setConversationTitle(t('newConversation', language))
         setMessages([])
         return
       }
@@ -32,7 +32,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
         const data = await getConversationMessages(token, selectedConvoId)
         if (cancelled) return
 
-        setConversationTitle(data?.title || 'Conversation')
+        setConversationTitle(data?.title || t('conversation', language))
         setMessages(
           (data?.messages || []).map((msg, index) => ({
             id: msg.id ?? `${selectedConvoId}-${index}`,
@@ -43,8 +43,8 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
         )
       } catch (error) {
         if (!cancelled) {
-          setConversationTitle('Conversation')
-          setMessages([{ id: Date.now(), role: 'assistant', content: `Unable to load conversation: ${error.message}` }])
+          setConversationTitle(t('conversation', language))
+          setMessages([{ id: Date.now(), role: 'assistant', content: `${t('unableToLoadConversation', language)}: ${error.message}` }])
         }
       } finally {
         if (!cancelled) setLoadingConversation(false)
@@ -56,7 +56,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
     return () => {
       cancelled = true
     }
-  }, [selectedConvoId, token])
+  }, [selectedConvoId, token, language])
 
   useEffect(() => {
     scrollToBottom()
@@ -75,7 +75,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
     if (trimmedText) {
       addMessage('user', trimmedText)
     } else if (attachedFile) {
-      addMessage('user', `Uploaded file: ${attachedFile.name}`)
+      addMessage('user', `${t('uploadedFile', language)}: ${attachedFile.name}`)
     }
 
     const assistantId = Date.now() + Math.random()
@@ -85,7 +85,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
 
     try {
       if (!token) {
-        throw new Error('You must be signed in to chat')
+        throw new Error(t('youMustBeSignedIn', language))
       }
 
       if (attachedFile) {
@@ -93,7 +93,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
           token,
           attachedFile,
           currentConvoId,
-          trimmedText || `Analyze this file: ${attachedFile.name}`
+          trimmedText || `${t('analyzeFile', language)}: ${attachedFile.name}`
         )
 
         currentConvoId = uploadResult.conversation_id || currentConvoId
@@ -101,7 +101,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
           onNewConvo && onNewConvo(currentConvoId, uploadResult.title || attachedFile.name)
         }
 
-        const reply = uploadResult.summary || uploadResult.analysis || 'File uploaded successfully.'
+        const reply = uploadResult.summary || uploadResult.analysis || t('fileUploadedSuccessfully', language)
         setMessages((m) => m.map(msg => msg.id === assistantId ? { ...msg, content: reply, loading: false } : msg))
         setConversationTitle(uploadResult.title || conversationTitle)
         return
@@ -110,7 +110,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
       const res = await sendMessage(token, trimmedText, currentConvoId)
 
       if (!selectedConvoId && res.conversation_id) {
-        onNewConvo && onNewConvo(res.conversation_id, res.title || trimmedText.slice(0, 40) || 'New Chat')
+        onNewConvo && onNewConvo(res.conversation_id, res.title || trimmedText.slice(0, 40) || t('newChat', language))
       }
 
       const reply = res.reply || res.message || res.ai_response || JSON.stringify(res)
@@ -122,7 +122,6 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
   }
 
   function handleShare() {
-    // Mock share functionality
     navigator.clipboard.writeText(window.location.href).then(() => {
       setShowShareToast(true)
       setTimeout(() => setShowShareToast(false), 2000)
@@ -130,10 +129,10 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
   }
 
   const quickActions = [
-    { emoji: '💡', text: 'Generate ideas' },
-    { emoji: '📝', text: 'Help me write' },
-    { emoji: '🔍', text: 'Analyze data' },
-    { emoji: '🎨', text: 'Creative tasks' },
+    { emoji: '💡', text: t('generateIdeas', language) },
+    { emoji: '📝', text: t('helpMeWrite', language) },
+    { emoji: '🔍', text: t('analyzeData', language) },
+    { emoji: '🎨', text: t('creativeTasks', language) },
   ]
 
   return (
@@ -147,7 +146,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
           </div>
           <div className="chat-header-text">
             <h2>{conversationTitle}</h2>
-            <span>AI Assistant ready to help</span>
+            <span>{t('appTagline', language)}</span>
           </div>
         </div>
         <div className="chat-header-actions flex items-center gap-3">
@@ -176,24 +175,24 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
               </svg>
             )}
           </button>
-          <button onClick={handleShare} className="share-btn" title="Share conversation">
+          <button onClick={handleShare} className="share-btn" title={t('shareConversation', language)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
-            Share
+            {t('share', language)}
           </button>
           <div className="usage-badge">
             <span className="dot"></span>
-            <span>Online</span>
+            <span>{t('online', language)}</span>
           </div>
         </div>
       </header>
 
       {showShareToast && (
         <div className="share-toast">
-          Link copied to clipboard!
+          {t('linkCopied', language)}
         </div>
       )}
 
@@ -208,8 +207,8 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
                 <circle cx="15" cy="10" r="1" fill="currentColor" />
               </svg>
             </div>
-            <h3>How can I help you today?</h3>
-            <p>I'm Ella, your AI assistant. Ask me anything or try one of the suggestions below.</p>
+            <h3>{t('howCanIHelp', language)}</h3>
+            <p>{t('askAnything', language)}</p>
             <div className="quick-actions">
               {quickActions.map((action, i) => (
                 <button key={i} className="quick-action" onClick={() => handleSend(action.text)}>
@@ -223,7 +222,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
           <>
             {loadingConversation && messages.length === 0 && (
               <div className="empty-state">
-                <h3>Loading conversation...</h3>
+                <h3>{t('loadingConversation', language)}</h3>
               </div>
             )}
             {messages.map((m) => (
@@ -236,7 +235,7 @@ export default function ChatWindow({ selectedConvoId, token, onNewConvo, theme, 
 
       <div className="input-area">
         <div className="input-wrapper">
-          <InputBox onSend={handleSend} />
+          <InputBox onSend={handleSend} language={language} />
         </div>
       </div>
     </div>
