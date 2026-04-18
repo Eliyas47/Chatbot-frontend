@@ -1,4 +1,4 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/$/, '')
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
 
 function safeJsonParse(value, fallback = null) {
   try {
@@ -26,7 +26,12 @@ async function request(path, { method = 'GET', token, data, formData } = {}) {
     init.body = JSON.stringify(data)
   }
 
-  const response = await fetch(`${API_BASE}${path}`, init)
+  let response
+  try {
+    response = await fetch(`${API_BASE}${path}`, init)
+  } catch {
+    throw new Error('Cannot reach backend API. Ensure Django is running on http://127.0.0.1:8000.')
+  }
   const contentType = response.headers.get('content-type') || ''
   const payload = contentType.includes('application/json') ? await response.json() : await response.text()
 
