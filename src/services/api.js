@@ -10,7 +10,7 @@ function getDefaultApiCandidates() {
   const isLocalHost = host === 'localhost' || host === '127.0.0.1'
 
   if (isLocalHost) {
-    return ['/api', 'http://127.0.0.1:8000/api', DEPLOYED_BACKEND_API_BASE]
+    return ['http://127.0.0.1:8000/api', DEPLOYED_BACKEND_API_BASE]
   }
 
   return ['/api', DEPLOYED_BACKEND_API_BASE]
