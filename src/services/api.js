@@ -38,6 +38,11 @@ function isHtmlPayload(value) {
   return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html')
 }
 
+function isNetworkLikeError(error) {
+  const message = String(error?.message || '')
+  return error instanceof TypeError || /failed to fetch|load failed|networkerror|econnrefused/i.test(message)
+}
+
 async function request(path, { method = 'GET', token, data, formData } = {}) {
   const headers = {
     ...getAuthHeaders(token),
@@ -85,7 +90,7 @@ async function request(path, { method = 'GET', token, data, formData } = {}) {
         continue
       }
 
-      if (!API_BASE_FROM_ENV) {
+      if (!API_BASE_FROM_ENV && isNetworkLikeError(error)) {
         throw new Error('Cannot reach backend API. Ensure Django is running on http://127.0.0.1:8000.')
       }
 
