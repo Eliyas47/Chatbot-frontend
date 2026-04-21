@@ -1,4 +1,5 @@
 const API_BASE_FROM_ENV = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+const ALLOW_REMOTE_FALLBACK_ON_LOCAL = import.meta.env.VITE_ALLOW_REMOTE_FALLBACK_ON_LOCAL === 'true'
 const DEPLOYED_BACKEND_API_BASE = 'https://django-gemini-chatbot.onrender.com/api'
 
 function getDefaultApiCandidates() {
@@ -10,7 +11,9 @@ function getDefaultApiCandidates() {
   const isLocalHost = host === 'localhost' || host === '127.0.0.1'
 
   if (isLocalHost) {
-    return ['http://127.0.0.1:8000/api', DEPLOYED_BACKEND_API_BASE]
+    return ALLOW_REMOTE_FALLBACK_ON_LOCAL
+      ? ['http://127.0.0.1:8000/api', DEPLOYED_BACKEND_API_BASE]
+      : ['http://127.0.0.1:8000/api']
   }
 
   return ['/api', DEPLOYED_BACKEND_API_BASE]
