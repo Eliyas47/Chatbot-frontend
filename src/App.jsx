@@ -8,11 +8,31 @@ import { getStoredLanguage, setStoredLanguage, t } from './i18n/translations'
 
 const THEME_STORAGE_KEY = 'theme'
 
+function safeGetStorage(key) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetStorage(key, value) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Ignore browser storage access failures and keep UI usable.
+  }
+}
+
 function getInitialTheme() {
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
+  const savedTheme = safeGetStorage(THEME_STORAGE_KEY)
   if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme
 
-  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  try {
+    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  } catch {
+    return 'dark'
+  }
 }
 
 function ThemeToggleButton({ theme, onToggle, className = '' }) {
@@ -88,7 +108,7 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function App() {
-  const [token, setTokenState] = useState(localStorage.getItem('token') || null)
+  const [token, setTokenState] = useState(() => safeGetStorage('token') || null)
   const [user, setUser] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
   const [language, setLanguageState] = useState(getStoredLanguage())
@@ -96,7 +116,7 @@ export default function App() {
   const getInitialRoute = () => {
     const hash = window.location.hash.replace('#', '')
     if (hash) return hash
-    return localStorage.getItem('token') ? '/chat' : '/register'
+    return safeGetStorage('token') ? '/chat' : '/register'
   }
 
   const [route, setRoute] = useState(getInitialRoute())
@@ -112,7 +132,7 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme)
     document.body.setAttribute('data-theme', theme)
     document.documentElement.style.colorScheme = theme
-    localStorage.setItem(THEME_STORAGE_KEY, theme)
+    safeSetStorage(THEME_STORAGE_KEY, theme)
   }, [theme])
 
   useEffect(() => {
@@ -143,13 +163,17 @@ export default function App() {
 
   function setToken(t, userData = null) {
     if (t) {
-      localStorage.setItem('token', t)
+      safeSetStorage('token', t)
       setTokenState(t)
       if (userData) setUser(userData)
       window.location.hash = '/chat'
     } else {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      try {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      } catch {
+        // Ignore browser storage access failures and continue sign-out flow.
+      }
       setTokenState(null)
       setUser(null)
       window.location.hash = '/login'
